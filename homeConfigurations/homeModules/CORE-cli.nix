@@ -68,6 +68,7 @@
             nil
             lldb-vscode
             pylsp
+            elixir-ls
           ];
           environment.variables.EDITOR = "hx";
         };
@@ -92,6 +93,9 @@
       };
 
       termscp = {
+        enable = true;
+      };
+      ugm = {
         enable = true;
       };
     };    

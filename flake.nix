@@ -198,7 +198,7 @@
             # names are reserved
            } //  { 
              default = with karma; samsara;
-
+           } // {
              usb_installer = buildSystem [
                (nixpkgs + (toString /nixos/modules/installer/cd-dvd/installation-cd-base.nix))
                ({ config, lib, pkgs, ... }: {
@@ -209,6 +209,10 @@
                  networking.wireless.enable = false;
                  services.openssh.enable = true;
                  home-manager.users.${config._.user}.imports = [
+                  inputs.self.homeModules.CORE-cli
+                  inputs.self.homeModules.CORE-cli.fish
+                  inputs.self.homeModules.CORE-cli.git
+                  inputs.self.homeModules.CORE-cli.tmux
                  ];
                  system = {
                    stateVersion = "unstable";
@@ -227,20 +231,7 @@
                 })
              ];
            }    
-
-        # minimal = import ./nixosConfigurations/nixos.nix flakeContext;       
-          
-         # homeModules = {
-            # imports = [
-            # inputs.self.homeModules.CORE-cli
-            # ];
-        # modules = [
-        # ];
-           # CORE-cli = import ./nixosConfigurations/homeModules/CORE-cli.nix;
-           # fish = import ./nixosConfigurations/homeModules/fish.nix flakeContext;
-           # git = import ./nixosConfigurations/homeModules/git.nix flakeContext;
-           # tmux = import ./nixosConfigurations/homeModules/tmux.nix flakeContext;
-         # };
+       
       );
 
       
