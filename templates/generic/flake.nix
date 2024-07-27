@@ -2,37 +2,28 @@
   description = "Ultimate Motherflake for all needs";
 
   nixConfig = {
-    extra-experimental-features = [ "nix-command" "flakes" "develop"];
-    allow = [ "nonfree" ];
+    extra-experimental-features = [ "nix-command" "flakes" ];
+    config = {
+          allow.nonfree = true;
+    };
+
     # extra-substituters = [
       # "https://cache.nixos.org"
     # ];
-    # trusted-public-keys = [];
+    # trusted-public-keys = [
+    # ];
   };
 
   inputs = {
-    nixpkgs.url = "flake:nixpkgs/nixpkgs-unstable";
-    home-manager = {
-      url = "flake:home-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs = {
+      url = "flake:nixpkgs/nixpkgs-unstable";
     };
     nix-darwin = {
       url = "flake:nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixos-hardware = {
-      url = "github:nixos/nixos-hardware";
-    };
-    nixos-secureboot = {
-      url = "github:nix-community/lanzaboote";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    wg-bond = {
-      url = "github:cab404/wg-bond";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     agenix = {
@@ -41,7 +32,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, nix-darwin, agenix, nixos-generators, nixos-secureboot, nixos-hardware, ... }@inputs:
+  outputs = { self, nixpkgs, nix-darwin, agenix, nixos-generators, ... }@inputs:
    let
     
       # Everything i may support here:
@@ -96,12 +87,6 @@
       buildConfig = modules: system: { inherit modules system specialArgs; };
       buildSystem = modules: system: lib.nixosSystem (buildConfig modules system);
 
-      hosts = [
-        # ./nodes/keter/tiferet
-        # ./nodes/keter/c1
-      ];
-
-      # next few are totally borrowed
       hostAttrs = dir: {
         # settings = import "${dir}/host-metadata.nix";
         config = import "${dir}/configuration.nix";
@@ -112,7 +97,8 @@
         config
         hw-config
       ]
-        settings.system;
+      ;
+        # settings.system;
 
       virt-node = dir: with hostAttrs dir; buildSystem [
         config
@@ -120,10 +106,6 @@
       ]
         settings.system;
 
-      # legacy
-      flakeContext = {
-        inherit inputs;
-      };
       overlays = [
         (self: super: {
         })
@@ -139,16 +121,12 @@
       devShells = forSystem (linuxSystems ++ darwinSystems) (
       { pkgs }: 
       let 
-        availableShells = import ./devShells/core.nix     { inherit pkgs recursiveMerge agenix; };
-        ctfShells       = import ./devShells/pwn.nix      { inherit pkgs; };
+        availableShells = import ./devShells/core.nix     { inherit pkgs recursiveMerge; };
       in 
          {
-          # prototyping new devshell schema
-           inherit (ctfShells) pwn_web pwn_reverse;
-          # core, no more gnumake opression
-           inherit (availableShells) core develop sboot android_enroll ;
+          # core
+           inherit (availableShells) core develop;
          } // { 
-          # wow it's so easy
            default = with availableShells; core;
          } 
       );
@@ -159,33 +137,23 @@
       { pkgs, config }:
             
         let
-          lunary = import ./homeConfigurations/lunary.nix { inherit pkgs; }; 
-          availableHomeConfig  = import ./homeConfigurations/core.nix   { inherit pkgs; }; 
+          availableHomeConfig = import ./homeConfigurations/core.nix   { inherit pkgs; }; 
         in 
            {
-             inherit (lunary) luna steelglass sun;
-             inherit (availableHomeConfig) core;
-           } // {
-              default = with availableHomeConfig; core;
+             inherit (availableHomeConfig) core ;
            } // { 
-           homeConfig_installer = {
-             config = {
-               home = {
-                 homeDirectory = /home/${config._.user};
-                 stateVersion = "23.05";
-                 # username = "foxxie";
-                 username = "n30f0x";
-               };
-             };
-          };
+              default = with availableHomeConfig; core;
+           } // {
+              homeConfig_installer = {
+                 config = {
+                   home = {
+                     homeDirectory = /home/${config._.user};
+                     stateVersion = "23.05";
+                     username = "nix";
+                   };
+                 };
+              };
          }    
-              # default = with lunary; 
-              # homeModules = {
-                # imports = [
-                # inputs.self.homeModules.CORE-cli
-                # ];
-              # };
-             # }
       );
 
 
@@ -193,17 +161,12 @@
       nixosConfigurations = forSystem linuxSystems (
       { pkgs, agenix }:
         let
-          karma = import ./nixosConfigurations/karma { inherit pkgs; };
-          # project_paranoia = import ./nixosConfigurations/project_paranoia { inherit pkgs; };
+          availableNixosConfig = import ./nixosConfigurations/core { inherit pkgs; };
         in 
            {
-             inherit (karma) samsara dharma core;
-             # inherit (project_paranoia) kikimora interloper ghostbuster;
-             # inherit (luna) luna-2 luna-mobile;
-             # inherit (project_alterra) alterra osiris;
-            # names are reserved
+             inherit (availableNixosConfig) core;
            } //  { 
-             default = with karma; samsara;
+             default = with availableNixosConfig; core;
            } // {
              usb_installer = buildSystem [
                (nixpkgs + (toString /nixos/modules/installer/cd-dvd/installation-cd-base.nix))
@@ -245,11 +208,11 @@
       
 
       darwinConfigurations = forSystem darwinSystems (
-      { pkgs, agenix }:
+      { pkgs, agenix, home-manager}:
         let
-          luna  = import ./darwinConfigurations/luna.nix  { inherit pkgs; }; 
+          availableDarwinConfiguration = import ./darwinConfigurations/core.nix  { inherit pkgs; }; 
           imports = [
-            inputs.home-manager.darwingModules.home-manager
+            inputs.self.home-manager.darwingModules.home-manager
             inputs.self.homeConfigurations.luna.nixosModule
             {
               home-manager.useGlobalPkgs = true;
@@ -258,9 +221,9 @@
           ];
         in 
            {
-             inherit (luna) luna-darwin;
+             inherit (availableDarwinConfiguration) core;
            } // { 
-             default = with luna; luna-darwin;
+             default = with availableDarwinConfiguration; core;
            }    
       );
 
@@ -292,7 +255,8 @@
          supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
          mandatoryFeatures = [ ];
         }];
-       distributedBuilds = true; # optional, useful when the builder has a faster internet connection than yours
+       distributedBuilds = true;
+	     # optional, useful when the builder has a faster internet connection than yours
 	     extraOptions = ''
 	       builders-use-substitutes = true
 	     '';  

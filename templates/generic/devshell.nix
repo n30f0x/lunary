@@ -154,47 +154,10 @@
     };
 
 
-    sboot = with pkgs; { 
-        packages = lib.optionals stdenv.isLinux 
-        [ sbctl ];
-        scripts = 
-        lib.optionals stdenv.isLinux 
-        [
-        (writeShellScriptBin "nix-sboot-make" ''
-          sbctl create-keys && sbctl verify
-        '')
-        (writeShellScriptBin "nix-sboot-enroll" ''
-          sbctl enroll-keys
-        '')
-        (writeShellScriptBin "nix-sboot-enroll-microsoft" ''
-          sbctl enroll-keys --microsoft
-        '')
-        ];       
-        envvars = {
-         DESCRIPTION = "Secure Boot Enrolling";
-         TUI_HOOK = mapVar sboot.scripts;
-        };
-        main = with sboot; ({packages = packages ++ scripts;} // envvars);
-    };
-
-    android_enroll = with pkgs; {
-        packages = [];
-        scripts = [];
-        envvars = {};
-        main = with android_enroll_v; ({packages = scripts ++ scripts;} // envvars);
-      };
-
-
  in  {
 
     core = pkgs.mkShellNoCC
     ( recursiveMerge [ core.main tui.main ] );
-
-    sboot = pkgs.mkShellNoCC  
-    ( recursiveMerge [ sboot.main tui.main ] );
-
-    android_enroll = pkgs.mkShellNoCC
-    ( recursiveMerge [ android_enroll.main tui.main ] );
 
     develop = pkgs.mkShell
     ( recursiveMerge [ develop.main tui.main ] );
