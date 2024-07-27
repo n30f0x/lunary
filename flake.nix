@@ -2,7 +2,7 @@
   description = "Ultimate Motherflake for all needs";
 
   nixConfig = {
-    extra-experimental-features = [ "nix-command" "flakes" "develop"];
+    extra-experimental-features = [ "nix-command" "flakes" ];
     allow = [ "nonfree" ];
     # extra-substituters = [
       # "https://cache.nixos.org"
@@ -299,4 +299,17 @@
       });
 
     };
+
+    templates = {
+      generic = {
+        path = templates/generic;
+        description = "Generic Motherflake template";
+        welcomeText = ''
+          # Getting started
+          - Ensure you have git installed and flakes enabled
+          - Run `nix develop`
+          '';
+      };
+    };
+    
 }
