@@ -298,18 +298,17 @@
 	     '';  
       });
 
-    };
-
-    templates = {
-      generic = {
-        path = templates/generic;
-        description = "Generic Motherflake template";
-        welcomeText = ''
-          # Getting started
-          - Ensure you have git installed and flakes enabled
-          - Run `nix develop`
-          '';
+      templates = {
+        generic = {
+          path = templates/generic;
+          description = "Generic Motherflake template";
+          welcomeText = ''
+            # Getting started
+            - Ensure you have git installed and flakes enabled
+            - Run `nix develop`
+            '';
+        };
       };
     };
-    
+
 }
